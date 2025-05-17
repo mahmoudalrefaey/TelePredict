@@ -26,8 +26,24 @@ A Django-based web application for predicting customer churn in the telecommunic
 - pip (Python package installer)
 - Git
 
+## Project Structure
+
+```
+TelePredict/
+├── frontend/           # React frontend application
+│   ├── public/        # Static files
+│   ├── src/          # React source code
+│   └── package.json  # Frontend dependencies
+├── clients/           # Client management app
+├── pages/            # Main pages app
+├── TeleChurn_Project/ # Project settings
+├── manage.py         # Django management script
+└── requirements.txt  # Backend dependencies
+```
+
 ## Installation
 
+### Backend Setup
 1. Clone the repository:
 ```bash
 git clone https://github.com/mahmoudalrefaey/TelePredict.git
@@ -60,23 +76,23 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-6. Run the development server:
+### Frontend Setup
+1. Navigate to the frontend directory:
 ```bash
-python manage.py runserver
+cd frontend
 ```
 
-The application will be available at `http://127.0.0.1:8000/`
-
-## Project Structure
-
+2. Install Node.js dependencies:
+```bash
+npm install
 ```
-TelePredict/
-├── clients/             # Client management app
-├── pages/              # Main pages app
-├── TeleChurn_Project/  # Project settings
-├── manage.py           # Django management script
-└── requirements.txt    # Project dependencies
+
+3. Start the development server:
+```bash
+npm start
 ```
+
+The frontend will be available at `http://localhost:3000`
 
 ## Usage
 
