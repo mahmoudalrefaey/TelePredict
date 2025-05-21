@@ -40,6 +40,7 @@ class RegisterSerializer(serializers.Serializer):
     company_address = serializers.CharField(write_only=True)
     company_contact_no = serializers.CharField(write_only=True)
     company_email = serializers.EmailField(write_only=True)
+    plan_type = serializers.ChoiceField(choices=['basic', 'standard', 'partner'], write_only=True)
 
     def validate(self, data):
         if data['password'] != data['password2']:
@@ -51,6 +52,7 @@ class RegisterSerializer(serializers.Serializer):
     def create(self, validated_data):
         try:
             validated_data.pop('password2')
+            plan_type = validated_data.pop('plan_type')
             client = Client.objects.create(
                 company_id=validated_data['company_id'],
                 company_name=validated_data['company_name'],
@@ -58,6 +60,13 @@ class RegisterSerializer(serializers.Serializer):
                 company_contact_no=validated_data['company_contact_no'],
                 company_email=validated_data['company_email'],
                 password=make_password(validated_data['password'])
+            )
+            from datetime import date
+            Subscription.objects.create(
+                company=client,
+                plan_type=plan_type,
+                start_date=date.today(),
+                active=True
             )
             return client
         except Exception as e:
@@ -337,19 +346,27 @@ class ExportResultsView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class HomeView(APIView):
-    authentication_classes = [StaffJWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        clients = Client.objects.all()
-        serializer = ClientSerializer(clients, many=True)
-        return Response(serializer.data)
-
 class SubscriptionSerializer(serializers.ModelSerializer):
+    plan_duration = serializers.SerializerMethodField()
+    monthly_rate = serializers.SerializerMethodField()
+    total_charge = serializers.SerializerMethodField()
+    max_staff_allowed = serializers.SerializerMethodField()
+
     class Meta:
         model = Subscription
-        fields = ['subscription_id', 'plan_type', 'monthly_charges', 'total_charges', 'start_date', 'end_date', 'active']
+        fields = ['subscription_id', 'plan_type', 'monthly_charges', 'total_charges', 'plan_duration', 'monthly_rate', 'total_charge', 'max_staff_allowed', 'start_date', 'end_date', 'active']
+
+    def get_plan_duration(self, obj):
+        return obj.get_plan_duration()
+
+    def get_monthly_rate(self, obj):
+        return obj.get_monthly_rate()
+
+    def get_total_charge(self, obj):
+        return obj.total_charges
+
+    def get_max_staff_allowed(self, obj):
+        return obj.max_staff_allowed()
 
 class ClientSerializer(serializers.ModelSerializer):
     subscriptions = serializers.SerializerMethodField()
@@ -388,6 +405,14 @@ class StaffRegisterSerializer(serializers.Serializer):
             raise serializers.ValidationError('Staff ID already exists.')
         if not Client.objects.filter(company_id=data['client_id']).exists():
             raise serializers.ValidationError('Client does not exist.')
+        # Enforce staff limit
+        client = Client.objects.get(company_id=data['client_id'])
+        subscription = Subscription.objects.filter(company=client, active=True).first()
+        if subscription:
+            max_staff = subscription.max_staff_allowed()
+            staff_count = Staff.objects.filter(client=client).count()
+            if max_staff is not None and staff_count >= max_staff:
+                raise serializers.ValidationError(f"Staff limit reached for this subscription plan ({subscription.plan_type}).")
         return data
 
     def create(self, validated_data):
@@ -495,6 +520,13 @@ class ClientAddStaffSerializer(serializers.Serializer):
         return data
 
     def create(self, validated_data, client):
+        # Enforce staff limit
+        subscription = Subscription.objects.filter(company=client, active=True).first()
+        if subscription:
+            max_staff = subscription.max_staff_allowed()
+            staff_count = Staff.objects.filter(client=client).count()
+            if max_staff is not None and staff_count >= max_staff:
+                raise serializers.ValidationError(f"Staff limit reached for this subscription plan ({subscription.plan_type}).")
         validated_data.pop('password2')
         staff = Staff.objects.create(
             staff_id=validated_data['staff_id'],

@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
     RegisterView, DataUploadView, PredictView,
-    HistoryListView, HistoryDetailView, ExportResultsView, HomeView,
+    HistoryListView, HistoryDetailView, ExportResultsView,
     staff_register, staff_login, client_login, login_info, client_add_staff
 )
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -24,5 +24,4 @@ urlpatterns = [
     # Common endpoints
     path('login-info/', login_info, name='login-info'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
-    path('home/', HomeView.as_view(), name='home'),
 ] 
