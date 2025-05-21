@@ -5,5 +5,5 @@ from .models import UploadedDataset
 
 @admin.register(UploadedDataset)
 class UploadedDatasetAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'filename', 'upload_date')
-    search_fields = ('filename', 'user__username')
+    list_display = ('id', 'staff', 'filename', 'upload_date', 'status')
+    search_fields = ('filename', 'staff__name', 'staff__staff_id')
