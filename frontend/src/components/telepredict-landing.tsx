@@ -1,9 +1,13 @@
 import { Link } from "react-router-dom"; // Changed from 'next/link'
 import { Cloud, BarChart3, Network } from "lucide-react";
 import { useState, useEffect } from 'react'; // Added imports
+import img1 from '../assets/images/1.svg';
+import img2 from '../assets/images/2.svg';
+import { useAuth } from './AuthContext';
 
 export default function TelePredictLanding() {
   const [username, setUsername] = useState<string | null>(null);
+  const { isAuthenticated, userType } = useAuth();
 
   useEffect(() => {
     // Check for auth token and username in localStorage
@@ -47,6 +51,9 @@ export default function TelePredictLanding() {
     // navigate('/login');
   };
 
+  // Determine where Get Started should go
+  const getStartedLink = isAuthenticated && userType === 'client' ? '/dashboard' : '/prediction';
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header removed; now provided by Layout component */}
@@ -63,18 +70,20 @@ export default function TelePredictLanding() {
                 Empower your telecom business with actionable insights to reduce churn and boost retention.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                <Link to="/prediction">
+                <Link to={getStartedLink}>
                   <button className="bg-white text-indigo-700 px-6 py-2 rounded font-medium">Get Started</button>
                 </Link>
-                <button className="border border-white text-white px-6 py-2 rounded font-medium">Learn More</button>
+                <Link to="/about">
+                  <button className="border border-white text-white px-6 py-2 rounded font-medium">Learn More</button>
+                </Link>
               </div>
             </div>
             <div className="md:w-1/2">
-              {/* Replaced next/image with img tag */}
+              {/* Use imported SVG image 1 */}
               <img
-                src="/placeholder.svg" // Assuming placeholder.svg is in the public folder
+                src={img1}
                 alt="Data visualization illustration"
-                style={{ width: '400px', height: '300px' }} // Added style for width and height
+                style={{ width: '400px', height: '300px' }}
                 className="w-full"
               />
             </div>
@@ -125,11 +134,11 @@ export default function TelePredictLanding() {
         <section className="container mx-auto px-4 py-16">
           <div className="flex flex-col md:flex-row items-center gap-8">
             <div className="md:w-1/2">
-              {/* Replaced next/image with img tag */}
+              {/* Use imported SVG image 2 */}
               <img
-                src="/placeholder.svg" // Assuming placeholder.svg is in the public folder
+                src={img2}
                 alt="Data analysis illustration"
-                style={{ width: '350px', height: '300px' }} // Added style for width and height
+                style={{ width: '350px', height: '300px' }}
                 className="w-full"
               />
             </div>

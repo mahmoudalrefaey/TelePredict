@@ -47,6 +47,7 @@ const CompanyDashboard: React.FC = () => {
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [showAddStaff, setShowAddStaff] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<any>(null);
 
   useEffect(() => {
     fetchCompanyProfile();
@@ -78,6 +79,7 @@ const CompanyDashboard: React.FC = () => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    setFieldErrors(null);
     setLoading(true);
     try {
       const token = localStorage.getItem('authToken');
@@ -122,7 +124,29 @@ const CompanyDashboard: React.FC = () => {
       fetchCompanyProfile();
     } catch (err: any) {
       if (axios.isAxiosError(err) && err.response) {
-        setError(err.response.data.detail || 'Failed to register staff member');
+        const errorData = err.response.data;
+        if (typeof errorData === 'object' && errorData !== null) {
+          // Collect all error messages
+          let messages = [];
+          if (errorData.detail) {
+            messages.push(errorData.detail);
+          }
+          Object.entries(errorData).forEach(([key, value]) => {
+            if (key !== 'detail') {
+              if (Array.isArray(value)) {
+                value.forEach((msg) => messages.push(`${key}: ${msg}`));
+              } else {
+                messages.push(`${key}: ${value}`);
+              }
+            }
+          });
+          setError(messages.join(' '));
+          setFieldErrors(errorData);
+        } else if (typeof errorData === 'string') {
+          setError(errorData);
+        } else {
+          setError('Failed to register staff member');
+        }
       } else {
         setError('An unexpected error occurred');
       }
@@ -324,6 +348,17 @@ const CompanyDashboard: React.FC = () => {
               {error && (
                 <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
                   {error}
+                </div>
+              )}
+              {fieldErrors && typeof fieldErrors === 'object' && (
+                <div className="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-md">
+                  <ul className="list-disc pl-5">
+                    {Object.entries(fieldErrors).map(([key, value]) => (
+                      key !== 'detail' && Array.isArray(value) ? value.map((msg, idx) => (
+                        <li key={key + idx}><strong>{key}:</strong> {msg}</li>
+                      )) : null
+                    ))}
+                  </ul>
                 </div>
               )}
               {success && (

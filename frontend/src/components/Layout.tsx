@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { Cloud, BarChart3, Network } from "lucide-react";
+import { useAuth } from './AuthContext';
 
 // Helper to decode JWT and extract user info
 function decodeJWT(token: string) {
@@ -13,76 +14,11 @@ function decodeJWT(token: string) {
 }
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [username, setUsername] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userType, setUserType] = useState<string | null>(null);
+  const { isAuthenticated, username, userType, logout } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Check for auth token and userType in localStorage
-    const token = localStorage.getItem("authToken");
-    const storedUserType = localStorage.getItem("userType");
-    let displayName = null;
-    if (token) {
-      const decoded = decodeJWT(token);
-      if (decoded) {
-        if (storedUserType === 'client' && decoded.company_name) {
-          displayName = decoded.company_name;
-        } else if (storedUserType === 'staff' && decoded.name) {
-          displayName = decoded.name;
-        }
-        setIsAuthenticated(true);
-        setUserType(storedUserType);
-      } else {
-        // Invalid token, clear everything
-        handleLogout();
-      }
-    } else {
-      setIsAuthenticated(false);
-      setUserType(null);
-    }
-    setUsername(displayName);
-
-    // Listen for storage changes to update UI if login/logout happens in another tab
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === "authToken" || event.key === "userType") {
-        const currentToken = localStorage.getItem("authToken");
-        const currentUserType = localStorage.getItem("userType");
-        let newDisplayName = null;
-        if (currentToken) {
-          const decoded = decodeJWT(currentToken);
-          if (decoded) {
-            if (currentUserType === 'client' && decoded.company_name) {
-              newDisplayName = decoded.company_name;
-            } else if (currentUserType === 'staff' && decoded.name) {
-              newDisplayName = decoded.name;
-            }
-            setIsAuthenticated(true);
-            setUserType(currentUserType);
-          } else {
-            handleLogout();
-          }
-        } else {
-          setIsAuthenticated(false);
-          setUserType(null);
-        }
-        setUsername(newDisplayName);
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
   const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("username");
-    localStorage.removeItem("userType");
-    localStorage.removeItem("userId");
-    setUsername(null);
-    setIsAuthenticated(false);
-    setUserType(null);
+    logout();
     navigate('/login');
   };
 
@@ -95,12 +31,16 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </Link>
         <nav className="hidden md:flex items-center gap-6">
           <Link to="/" className="text-sm hover:text-indigo-600">Home</Link>
+          <Link to="/about" className="text-sm hover:text-indigo-600">About Us</Link>
           {isAuthenticated && (
             <>
               {userType === 'staff' && (
                 <Link to="/prediction" className="text-sm hover:text-indigo-600">Prediction</Link>
               )}
               <Link to="/dashboard" className="text-sm hover:text-indigo-600">Dashboard</Link>
+              {userType === 'client' && (
+                <Link to="/contact" className="text-sm hover:text-indigo-600">Contact Us</Link>
+              )}
             </>
           )}
           {isAuthenticated ? (
@@ -116,7 +56,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           ) : (
             <Link to="/login" className="text-sm hover:text-indigo-600">Login</Link>
           )}
-          <Link to="/contact" className="bg-indigo-700 text-white px-4 py-2 rounded text-sm">Contact Us</Link>
+          {!isAuthenticated && (
+            <Link to="/contact" className="text-sm hover:text-indigo-600">Contact Us</Link>
+          )}
         </nav>
       </header>
       <main className="flex-1">{children}</main>

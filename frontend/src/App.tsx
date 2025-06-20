@@ -7,6 +7,7 @@ import TelePredictLanding from './components/telepredict-landing';
 import SignupPage from './components/signup-page'; // Import the new SignupPage component
 import Layout from './components/Layout';
 import DashboardPage from './components/DashboardPage';
+import AboutPage from './components/about-page';
 
 const App: React.FC = () => {
   return (
@@ -18,6 +19,7 @@ const App: React.FC = () => {
         <Route path="/prediction" element={<PredictionPage />} />
         <Route path="/signup" element={<SignupPage />} /> {/* Add route for the signup page */}
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/about" element={<AboutPage />} />
       </Routes>
     </Layout>
   );

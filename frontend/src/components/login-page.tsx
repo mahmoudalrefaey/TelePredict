@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
 import { useState, FormEvent } from "react"; // Import useState and FormEvent
 import axios from "axios"; // Import axios
 import { useEffect } from "react";
+import { useAuth } from './AuthContext';
 
 // Add a simple JWT decode function
 function decodeJWT(token: string) {
@@ -20,6 +21,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate(); // Hook for navigation
+  const { login } = useAuth();
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -49,10 +51,7 @@ export default function LoginPage() {
             displayName = decoded.name;
           }
         }
-        localStorage.setItem("authToken", token);
-        localStorage.setItem("userType", userType);
-        localStorage.setItem("userId", idInput);
-        localStorage.setItem("username", displayName);
+        login(token, userType, idInput, displayName);
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         navigate("/");
       } else {
